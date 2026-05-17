@@ -1,0 +1,14 @@
+{
+  "id": "scenario_maturity",
+  "title": "情景与进阶成熟度问卷",
+  "description": "通过追涨、被套、盈利回撤、消息冲击和进阶概念判断用户综合成熟度。",
+  "dimensions": ["market_understanding", "analysis_framework", "risk_control", "execution_discipline", "review_ability"],
+  "questions": [
+    {"id": "s1", "type": "scenario", "text": "情景：某股票 3 天上涨 25%，成交量明显放大，市场讨论热度很高。你原本没有持仓，现在看到它继续上涨。你会不会买？依据是什么？止损、仓位和判断错误条件是什么？", "required": true, "rubric": "关注追涨场景下是否先定义风险和失效条件。"},
+    {"id": "s2", "type": "scenario", "text": "情景：你以 50 元买入一只股票，买入理由是业绩改善。买入后跌到 44 元，公司没有明显利空，但大盘也在下跌。你会止损、持有还是加仓？如果继续跌到 40 元如何处理？", "required": true, "rubric": "关注被套场景下是否遵守初始计划。"},
+    {"id": "s3", "type": "scenario", "text": "情景：你买入后浮盈 20%，但之后回撤到只剩 8% 浮盈。你会继续持有还是止盈？如何避免盈利变亏损？", "required": true, "rubric": "关注趋势/波段规则和止盈纪律。"},
+    {"id": "s4", "type": "scenario", "text": "情景：你持有的股票盘后发布公告，第二天可能大幅低开。你看不懂公告影响。你会如何处理？如果无法判断，你的原则是什么？", "required": true, "rubric": "关注信息不足时的风险优先原则。"},
+    {"id": "q36_45", "type": "open_text", "text": "请综合回答：你如何理解胜率、赔率、最大回撤、策略失效、不交易条件，以及“哪些钱是不该赚的”？", "required": true, "rubric": "关注进阶交易系统观。"}
+  ],
+  "score_weight": {"market_understanding": 0.2, "analysis_framework": 0.2, "risk_control": 0.25, "execution_discipline": 0.2, "review_ability": 0.15}
+}

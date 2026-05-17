@@ -1,0 +1,23 @@
+{
+  "name": "ai-trading-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI 交易能力训练工作台 — Landing Pages",
+  "scripts": {
+    "predev": "python3 ../AITrading/scripts/clear_memory.py --yes --no-backup",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.8"
+  }
+}

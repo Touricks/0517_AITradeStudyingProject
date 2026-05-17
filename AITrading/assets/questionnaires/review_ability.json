@@ -1,0 +1,14 @@
+{
+  "id": "review_ability",
+  "title": "复盘进化能力问卷",
+  "description": "评估用户是否能记录交易、区分过程好坏，并从错误中提炼规则。",
+  "dimensions": ["review_ability", "execution_discipline"],
+  "questions": [
+    {"id": "q31", "type": "open_text", "text": "你是否记录每一笔交易？记录哪些字段？", "required": true, "rubric": "关注是否记录理由、计划、仓位、结果、情绪、复盘。"},
+    {"id": "q32", "type": "open_text", "text": "你如何区分“坏交易”和“亏钱交易”？", "required": true, "rubric": "成熟答案应区分过程质量和结果盈亏。"},
+    {"id": "q33", "type": "open_text", "text": "请描述你最近一笔失败交易：买入理由、实际走势、是否执行计划、下次如何改进。", "required": true, "rubric": "关注归因是否具体，改进是否可执行。"},
+    {"id": "q34", "type": "open_text", "text": "你如何评估一个策略是否有效？", "required": true, "rubric": "关注样本、回撤、胜率赔率和策略边界。"},
+    {"id": "q35", "type": "open_text", "text": "如果一个策略过去 3 个月有效，最近 1 个月失效，你会如何处理？", "required": true, "rubric": "关注策略失效判断和暂停/调整机制。"}
+  ],
+  "score_weight": {"review_ability": 0.75, "execution_discipline": 0.25}
+}

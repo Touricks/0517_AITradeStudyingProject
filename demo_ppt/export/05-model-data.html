@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AITradingPlatform · Model And Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./slides.css">
+</head>
+<body>
+<section data-slide data-screen-label="05 Model Data">
+  <div class="dot-bg"></div>
+  <div class="gold-curve thin"></div>
+  <div class="tpl-badge"><b>Model & Data</b> <span class="num">05</span></div>
+  <div class="main">
+    <div class="eyebrow">Kimi + 东方财富</div>
+    <div class="heading" style="margin-top:18px;">模型负责分析表达，数据 Provider 负责上下文归一化。</div>
+    <div class="three-col" style="margin-top:58px;">
+      <div class="card">
+        <div class="big-number">K</div>
+        <h3 style="margin-top:24px;">Kimi 模型服务</h3>
+        <p>通过 OpenAI-compatible 环境变量配置：`OPENAI_BASE_URL`、`OPENAI_API_KEY`、`OPENAI_MODEL`。</p>
+      </div>
+      <div class="card">
+        <div class="big-number">E</div>
+        <h3 style="margin-top:24px;">东方财富数据上下文</h3>
+        <p>由 `MarketDataProvider` 统一封装，向前端和训练逻辑输出归一化行情、公告、新闻和研报上下文。</p>
+      </div>
+      <div class="card dark">
+        <div class="big-number">C</div>
+        <h3 style="margin-top:24px;">合规边界</h3>
+        <p>行情和研报只作为训练材料，不生成股票推荐、价格目标或真实交易信号。</p>
+      </div>
+    </div>
+    <div class="code" style="margin-top:32px;">AITrading/config/.env
+OPENAI_BASE_URL=https://api.moonshot.cn/v1
+OPENAI_MODEL=moonshot-v1-32k
+WEB_SEARCH_PROVIDER=eastmoney_public</div>
+  </div>
+  <div class="slide-foot"><span class="num">05</span><span class="bar"></span><span>Kimi for reasoning, Eastmoney for context</span></div>
+  <div class="brand-mark"><div class="logo">AI</div><div class="stack"><span>AITrading</span><span>Platform</span></div></div>
+</section>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Secrets and local config
+config/*
+!config/.env.example
+.env
+.env.local
+.env.*.local
+*.local.env
+*.key
+*.pem
+*.p12
+id_rsa*
+.netrc
+
+# Local reference repos and bulky external material
+reference/
+
+# Runtime state
+data/
+.cache/
+**/.cache/
+__pycache__/
+*.py[cod]
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo

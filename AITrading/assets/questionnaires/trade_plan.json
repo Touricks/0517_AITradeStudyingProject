@@ -1,0 +1,14 @@
+{
+  "id": "trade_plan",
+  "title": "交易计划闭环问卷",
+  "description": "评估用户交易前是否有入场、止损、退出、持有周期、失效条件和复盘闭环。",
+  "dimensions": ["analysis_framework", "risk_control", "execution_discipline"],
+  "questions": [
+    {"id": "q21", "type": "open_text", "text": "请你写出一次交易前必须明确的 5 个要素。", "required": true, "rubric": "参考：入场理由、买入价格、止损位置、目标区域、仓位大小、持有周期、失效条件。"},
+    {"id": "q22", "type": "open_text", "text": "如果你买入一只股票后，它没有涨也没有跌，横盘 10 天，你会怎么处理？", "required": true, "rubric": "关注持有周期、机会成本和计划复核。"},
+    {"id": "q23", "type": "open_text", "text": "你会不会在盘中临时改变交易计划？什么情况下可以改？", "required": true, "rubric": "成熟答案应限制盘中情绪化修改。"},
+    {"id": "q24", "type": "open_text", "text": "你如何判断一笔交易应该止盈？", "required": true, "rubric": "关注止盈规则、趋势/波段方法差异。"},
+    {"id": "q25", "type": "open_text", "text": "你是否区分“看对方向”和“赚到钱”？为什么？", "required": true, "rubric": "关注交易执行和结果归因。"}
+  ],
+  "score_weight": {"analysis_framework": 0.25, "risk_control": 0.35, "execution_discipline": 0.4}
+}

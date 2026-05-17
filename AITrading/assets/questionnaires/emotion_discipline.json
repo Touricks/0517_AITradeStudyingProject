@@ -1,0 +1,14 @@
+{
+  "id": "emotion_discipline",
+  "title": "心理与执行纪律问卷",
+  "description": "评估用户是否容易被踏空、被套、连续亏损、他人收益等情绪因素驱动。",
+  "dimensions": ["execution_discipline", "risk_control", "review_ability"],
+  "questions": [
+    {"id": "q26", "type": "multi_choice_with_reason", "text": "以下哪种情况最容易影响你的交易？A. 踏空 B. 被套 C. 刚卖就涨 D. 连续亏损 E. 看到别人赚钱。请说明。", "required": true, "rubric": "关注用户是否能识别自身情绪触发器。"},
+    {"id": "q27", "type": "open_text", "text": "你有没有因为 FOMO 冲动买入过？当时发生了什么？", "required": true, "rubric": "关注是否承认冲动并提炼防范规则。"},
+    {"id": "q28", "type": "open_text", "text": "你如何处理“卖飞”？", "required": true, "rubric": "关注是否避免追悔和二次冲动。"},
+    {"id": "q29", "type": "open_text", "text": "如果你刚止损，股票第二天大涨，你会如何复盘？", "required": true, "rubric": "关注是否区分正确执行和单次结果。"},
+    {"id": "q30", "type": "open_text", "text": "你是否有过亏损后立刻想通过下一笔交易赚回来的情况？如何避免？", "required": true, "rubric": "关注报复性交易识别和暂停机制。"}
+  ],
+  "score_weight": {"execution_discipline": 0.55, "risk_control": 0.25, "review_ability": 0.2}
+}

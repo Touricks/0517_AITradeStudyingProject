@@ -1,0 +1,14 @@
+{
+  "id": "risk_control",
+  "title": "风险控制能力问卷",
+  "description": "评估用户是否先管理风险，再追求收益。",
+  "dimensions": ["risk_control", "execution_discipline"],
+  "questions": [
+    {"id": "q11", "type": "open_text", "text": "单笔交易你最多愿意亏损总资金的百分之几？", "required": true, "rubric": "成熟答案应给出明确比例和账户风险预算。"},
+    {"id": "q12", "type": "open_text", "text": "你是否会在买入前设定止损？如果会，止损依据是什么？", "required": true, "rubric": "关注止损依据是否可执行。"},
+    {"id": "q13", "type": "open_text", "text": "如果买入后下跌 8%，但你仍然看好基本面，你会怎么做？", "required": true, "rubric": "关注是否按计划处理，而非盲目补仓。"},
+    {"id": "q14", "type": "open_text", "text": "你如何理解“止损不是承认失败，而是控制不确定性”？", "required": true, "rubric": "关注概率思维和不确定性管理。"},
+    {"id": "q15", "type": "open_text", "text": "如果一个机会你非常看好，但潜在亏损也很大，你会如何控制风险？", "required": true, "rubric": "关注仓位、止损、放弃交易的能力。"}
+  ],
+  "score_weight": {"risk_control": 0.8, "execution_discipline": 0.2}
+}

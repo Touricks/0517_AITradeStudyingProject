@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AITradingPlatform · Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./slides.css">
+</head>
+<body>
+<section data-slide data-screen-label="03 Architecture">
+  <div class="dot-bg"></div>
+  <div class="gold-curve thin"></div>
+  <div class="tpl-badge"><b>Architecture</b> <span class="num">03</span></div>
+  <div class="main">
+    <div class="eyebrow">前端 + 后端 + MCP</div>
+    <div class="heading" style="margin-top:18px;">系统把“评测链路”和“Agent 个性化链路”分开。</div>
+    <div class="diagram" style="margin-top:70px;">
+      <div class="node" style="left:0; top:80px;">
+        <h3>React 前端</h3>
+        <p>评测问卷、训练表单、K 线与上下文面板，负责用户真实交互。</p>
+      </div>
+      <div class="node" style="left:470px; top:80px;">
+        <h3>Python API 后端</h3>
+        <p>交易能力评估、行为训练、memory 写入、Kimi 调用与市场数据封装。</p>
+      </div>
+      <div class="node" style="left:940px; top:80px;">
+        <h3>用户画像 Memory</h3>
+        <p>问卷结果、能力画像、训练记忆、风险标签和证据摘要。</p>
+      </div>
+      <div class="node" style="left:1410px; top:80px;">
+        <h3>STDIO MCP</h3>
+        <p>只读提取画像，供 Agent 在后续对话中参考。</p>
+      </div>
+      <div class="node" style="left:650px; top:350px; width:580px; background:var(--navy-deep); border-color:var(--navy-deep);">
+        <h3 style="color:var(--gold-bright);">Agent 个性化建议</h3>
+        <p style="color:rgba(255,255,255,0.84);">解释用户画像、指出训练重点、给出学习路径；不替用户答题，也不输出交易信号。</p>
+      </div>
+      <div class="arrow" style="left:332px; top:182px; width:120px;"></div>
+      <div class="arrow" style="left:802px; top:182px; width:120px;"></div>
+      <div class="arrow" style="left:1272px; top:182px; width:120px;"></div>
+      <div class="arrow" style="left:1090px; top:292px; width:160px; transform:rotate(102deg);"></div>
+    </div>
+  </div>
+  <div class="slide-foot"><span class="num">03</span><span class="bar"></span><span>Assessment path and agent path are separated</span></div>
+  <div class="brand-mark"><div class="logo">AI</div><div class="stack"><span>AITrading</span><span>Platform</span></div></div>
+</section>
+</body>
+</html>

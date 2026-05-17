@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AITradingPlatform · Runbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./slides.css">
+</head>
+<body>
+<section data-slide data-screen-label="07 Runbook">
+  <div class="dot-bg"></div>
+  <div class="gold-curve thin"></div>
+  <div class="tpl-badge"><b>Runbook</b> <span class="num">07</span></div>
+  <div class="main">
+    <div class="eyebrow">本地启动流程</div>
+    <div class="heading" style="margin-top:18px;">先配置后端，再打开前端，最后接入 MCP。</div>
+  </div>
+  <div class="rail">
+    <div class="step">
+      <div class="num">01</div>
+      <h3>配置环境变量</h3>
+      <p>`AITrading/config/.env` 写入 Kimi API 与东方财富 Provider 配置。</p>
+    </div>
+    <div class="step">
+      <div class="num">02</div>
+      <h3>启动后端</h3>
+      <p>`cd AITrading`<br>`python3 scripts/dev_server.py`</p>
+    </div>
+    <div class="step">
+      <div class="num">03</div>
+      <h3>启动前端</h3>
+      <p>`cd AITradingFrontend`<br>`npm install`<br>`npm run dev`</p>
+    </div>
+    <div class="step">
+      <div class="num">04</div>
+      <h3>接入 MCP</h3>
+      <p>修改 `.mcp.json` 绝对路径，Agent 通过只读 tool 读取画像。</p>
+    </div>
+  </div>
+  <div class="code" style="position:absolute; left:130px; right:130px; top:800px;">关键接口：GET /health · POST /api/questionnaires/full_assessment/submit · POST /api/training/check · GET /api/memory</div>
+  <div class="slide-foot"><span class="num">07</span><span class="bar"></span><span>Configure, run, connect</span></div>
+  <div class="brand-mark"><div class="logo">AI</div><div class="stack"><span>AITrading</span><span>Platform</span></div></div>
+</section>
+</body>
+</html>

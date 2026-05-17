@@ -1,0 +1,14 @@
+{
+  "id": "trading_cognition",
+  "title": "交易本质认知问卷",
+  "description": "评估用户是否理解交易中的不确定性、概率、周期和策略失效。",
+  "dimensions": ["market_understanding", "risk_control"],
+  "questions": [
+    {"id": "q1", "type": "single_choice_with_reason", "text": "你认为交易中最重要的是以下哪一项？A. 找到必涨标的 B. 提高胜率 C. 控制亏损和风险回报比 D. 频繁捕捉机会。请说明原因。", "required": true, "rubric": "成熟答案应优先强调风险回报比、亏损控制、概率思维，而非必涨或频繁机会。"},
+    {"id": "q2", "type": "open_text", "text": "你如何理解“市场短期是投票机，长期是称重机”？", "required": true, "rubric": "关注短期情绪和长期价值/基本面之间的关系。"},
+    {"id": "q3", "type": "open_text", "text": "你认为一次交易的结果能否证明你的判断正确？为什么？", "required": true, "rubric": "成熟答案应区分单次结果和长期策略有效性。"},
+    {"id": "q4", "type": "open_text", "text": "如果你连续盈利 5 次，你会如何调整仓位？", "required": true, "rubric": "关注是否避免过度自信和仓位放大。"},
+    {"id": "q5", "type": "open_text", "text": "如果你连续亏损 5 次，你会如何判断是策略失效，还是正常回撤？", "required": true, "rubric": "关注样本、回撤、规则和暂停复盘机制。"}
+  ],
+  "score_weight": {"market_understanding": 0.7, "risk_control": 0.3}
+}

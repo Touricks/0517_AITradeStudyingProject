@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "aitrading-ability": {
+      "command": "/usr/bin/python3",
+      "args": [
+        "-m",
+        "aitrading_ability_mcp.server"
+      ],
+      "cwd": "/Users/carrick/AITradingPlatform/AITradingMCP",
+      "env": {
+        "PYTHONPATH": "/Users/carrick/AITradingPlatform/AITradingMCP/src",
+        "AITRADING_BACKEND_URL": "http://127.0.0.1:8000",
+        "AITRADING_MCP_ENABLE_WRITE_TOOLS": "false"
+      }
+    }
+  }
+}

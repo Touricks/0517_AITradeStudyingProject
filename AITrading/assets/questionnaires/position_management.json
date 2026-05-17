@@ -1,0 +1,14 @@
+{
+  "id": "position_management",
+  "title": "仓位管理能力问卷",
+  "description": "评估用户是否根据风险预算、止损距离和组合状态决定仓位。",
+  "dimensions": ["risk_control", "execution_discipline"],
+  "questions": [
+    {"id": "q16", "type": "single_choice_with_reason", "text": "你通常如何决定买入仓位？A. 凭感觉 B. 看信心强弱 C. 根据止损距离和最大亏损额度 D. 一次性满仓。请说明原因。", "required": true, "rubric": "成熟答案应选择或接近 C。"},
+    {"id": "q17", "type": "calculation", "text": "账户 10 万元，单笔最多亏 2%，某股票买入价 100 元，止损价 95 元。你最多可以买多少股？", "required": true, "rubric": "正确思路：最大亏损 2000 元，单股风险 5 元，最多 400 股。"},
+    {"id": "q18", "type": "open_text", "text": "如果你已有 70% 仓位，市场突然出现一个更好的机会，你会怎么处理？", "required": true, "rubric": "关注组合风险、换仓条件和不冲动加仓。"},
+    {"id": "q19", "type": "open_text", "text": "你是否会加仓？在什么条件下加仓？", "required": true, "rubric": "区分盈利加仓、计划内加仓和情绪加仓。"},
+    {"id": "q20", "type": "open_text", "text": "你是否会补仓？补仓和加仓的区别是什么？", "required": true, "rubric": "关注是否能识别亏损补仓风险。"}
+  ],
+  "score_weight": {"risk_control": 0.6, "execution_discipline": 0.4}
+}

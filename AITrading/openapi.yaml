@@ -1,0 +1,1295 @@
+openapi: 3.1.0
+
+info:
+  title: AI Trading Ability Training Workspace API
+  version: 1.0.0
+  description: |
+    Contract between **AITradingFrontend** (three-entry React workspace) and the
+    **AITrading** backend (`backend/app/server.py`, stdlib HTTP).
+
+    This file is the single source of truth for *what the frontend sends* and
+    *what the frontend needs back* to render its core screens. It is derived
+    from the running backend, not aspiration:
+
+    - `server.py`            -> routes, status codes, error envelopes
+    - `orchestrator.py`      -> the shared `OrchestrateResponse` envelope + tool_trace
+    - `engines.py`           -> assessment / training / review report shapes
+    - `questionnaire_*`      -> questionnaire list/detail/submit + fixed profile schema
+    - `market.py`            -> K-line chart background via MarketDataProvider
+    - `research.py`          -> broker report search envelope
+    - `memory.py`            -> `/api/memory` snapshot used by profile/history views
+
+    Design boundary (enforced by `compliance.py`): this is an investment
+    *education / trading-ability training* system. It never returns stock picks,
+    buy/sell points, or trade signals. Every generated report carries the notice:
+
+        本系统仅用于投资教育与交易能力训练，不构成任何投资建议、个股推荐或买卖信号。
+
+    Frontend page -> endpoint map:
+      - HomePage  smart input box        -> POST /api/orchestrate (auto-routes entry)
+      - HomePage  "能力画像 · u_001" card  -> GET  /api/memory (user_profiles[user_id])
+      - AssessmentPage 8-question / full  -> GET  /api/questionnaires(/{id})
+                                             POST /api/questionnaires/{id}/submit
+                                             POST /api/assessment/run  (heuristic, no LLM)
+      - TrainingPage scenario + plan form -> POST /api/training/check
+      - TrainingPage public K-line panel  -> GET  /api/market/kline
+      - ReviewPage  trade record form     -> POST /api/review/run
+      - ReviewPage  history / error cloud -> GET  /api/memory (review_reports, session_memories)
+      - Research background (auto inside training) -> POST /api/research/search
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local backend (python -m backend.app.server)
+
+tags:
+  - name: System
+    description: Health and raw memory snapshot.
+  - name: Orchestrator
+    description: Unified entry. Classifies intent, runs tools, writes memory.
+  - name: Assessment
+    description: Capability assessment — heuristic and questionnaire/LLM paths.
+  - name: Training
+    description: Pre-trade / in-position behavior training feedback.
+  - name: Market
+    description: Read-only stock context for training background charts.
+  - name: Review
+    description: Post-trade review, error attribution, new rules.
+  - name: Questionnaire
+    description: Config-driven questionnaires (8 partial + 1 full).
+  - name: Research
+    description: Public broker-report background search (no signals).
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Liveness probe
+      description: Frontend uses this to show backend connectivity before enabling forms.
+      responses:
+        "200":
+          description: Backend is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+
+  /api/memory:
+    get:
+      tags: [System]
+      summary: Full memory store snapshot
+      description: |
+        Returns every logical collection. The frontend reads this to render
+        screens that have no dedicated endpoint yet:
+
+        - HomePage / Assessment radar  -> `user_profiles[user_id]`
+        - ReviewPage "最近复盘" timeline -> `review_reports`
+        - ReviewPage "10 类错误" cloud   -> aggregate `session_memories[].tags`
+        - Demo / tool-trace panels      -> `tool_call_logs`
+
+        There is currently **no** per-user profile endpoint; the client must
+        index `user_profiles` by its own `user_id`.
+      responses:
+        "200":
+          description: Deep copy of the JSON-backed store.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemorySnapshot"
+
+  /api/orchestrate:
+    post:
+      tags: [Orchestrator]
+      summary: Unified entry (HomePage smart input)
+      description: |
+        The smart input box on HomePage posts here with only `message`. The
+        backend normalizes `entry` from `entry` field or message keywords
+        (`复盘/卖出` -> review, `评估/水平/能力` -> assessment, else training;
+        `demo` is rewritten to a canned training payload), classifies intent,
+        runs the tool chain, writes session memory, and returns the report.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrchestrateRequest"
+            examples:
+              smartInput:
+                summary: Free-text from HomePage
+                value:
+                  user_id: u_001
+                  message: 我今天买入某股票，仓位30%，最近三天涨得很强，想加仓但有点犹豫
+      responses:
+        "200":
+          description: Unified envelope. `report` is one of the three engine reports.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrchestrateResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/assessment/run:
+    post:
+      tags: [Assessment]
+      summary: Heuristic capability assessment (no LLM)
+      description: |
+        Equivalent to `/api/orchestrate` with `entry=assessment`. Uses the
+        keyword-based `assessment_engine` (no LLM). Suitable for the quick
+        AssessmentPage path when answers are free-text strings rather than the
+        structured questionnaire. Drives the 5-dimension radar + trader-type
+        tag + next-training cards.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssessmentRunRequest"
+            examples:
+              quick:
+                value:
+                  user_id: u_001
+                  answers:
+                    - 单笔最多亏 2%，买入前一定设止损
+                    - 连续亏损会停手复盘，不加仓翻本
+                  trade_records: []
+      responses:
+        "200":
+          description: Orchestrate envelope whose `report` is an AssessmentReport.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrchestrateResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/assessment/full:
+    post:
+      tags: [Assessment]
+      summary: Full questionnaire assessment (LLM-backed profile)
+      description: |
+        Submits the full 40-question questionnaire (default
+        `questionnaire_id=full_assessment`). Calls Kimi via the
+        OpenAI-compatible client; on LLM failure it falls back to the heuristic
+        engine and the trace marks `kimi_profile_generate: fallback`. Produces
+        the fixed `QuestionnaireProfileReport` used to populate the full
+        capability profile / radar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionnaireSubmitRequest"
+      responses:
+        "200":
+          description: Questionnaire envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionnaireResponse"
+        "400":
+          $ref: "#/components/responses/InvalidQuestionnaireAnswers"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/training/check:
+    post:
+      tags: [Training]
+      summary: Behavior training and pre-buy decision support (TrainingPage)
+      description: |
+        Directly handled by the training agent, which prepares profile,
+        memory, compact stock_context, then calls `training_engine()`.
+        `/api/orchestrate` delegates training entries to the same path. The
+        TrainingPage scenario chips + "交易计划填写" form post here. The trade
+        plan can be sent as `trade_plan` or `form_data`. If a stock/code/theme
+        is present the backend auto-runs MarketDataProvider stock context import
+        (quote/kline/profile/announcements/news/reports when available) and
+        folds public reports into scoring.
+
+        Response `report` (TrainingReport) drives the dark feedback panel:
+        `plan_score` -> 46/100 ring, `training_decision` -> "当前不满足加仓训练规则",
+        `risk_tags` -> red/amber chips, `missing_fields` -> "需补全 N 项",
+        `training_tasks` -> 本次训练任务 list,
+        `decision_support_advice` / `risk_warnings` / `missing_research_items`
+        -> 买入前决策支持区. `tool_trace.length` -> "6 calls",
+        `memory_written` -> "✓ 已写入记忆". Kimi may generate the natural-language
+        support wording, but it cannot override score, rule status, missing fields,
+        or risk tags.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrainingCheckRequest"
+            examples:
+              preBuy:
+                summary: Pre-buy scenario with the minimal lightweight plan
+                value:
+                  user_id: u_001
+                  scenario: buy
+                  message: 我准备买入，想先检查资料和计划是否完整
+                  trade_plan:
+                    stock: 300059
+                    buy_price: 18.6
+                    reason: AI 金融题材活跃，近期突破平台
+                    risk_boundary: 跌回平台内或单笔亏损超过账户 1% 就停止本次计划
+                    position: 20
+                    holding_period: 1-2周
+      responses:
+        "200":
+          description: Orchestrate envelope whose `report` is a TrainingReport.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrchestrateResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/market/kline:
+    get:
+      tags: [Market]
+      summary: Read-only K-line background for TrainingPage
+      description: |
+        Frontend KLineChart calls this endpoint after extracting a 6-digit A-share
+        code from the training form. The backend uses `create_demo_provider()` to
+        fetch quote + daily K-line, normalizes fields for SVG drawing, and keeps
+        third-party request URLs private. Provider or validation failures still
+        return HTTP 200 with `available=false` and an `errors[]` list so training
+        submission is not blocked by market data availability.
+
+        The response is public context only. It must not be rendered as a buy,
+        sell, hold, add-position, prediction, or timing signal.
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{6}$'
+          example: "300059"
+        - name: market
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [A]
+            default: A
+          description: v1 only supports A-share demo codes.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 260
+            default: 120
+          description: Latest daily K-line rows returned for drawing.
+      responses:
+        "200":
+          description: K-line background envelope. Invalid symbols also return this shape with available=false.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketKlineResponse"
+
+  /api/review/run:
+    post:
+      tags: [Review]
+      summary: Trade review (ReviewPage)
+      description: |
+        Equivalent to `/api/orchestrate` with `entry=review`. The ReviewPage
+        trade-record form posts here as `trade_record` (or `form_data`) plus
+        `self_reflection`. Response `report` (ReviewReport) drives the review
+        report card: `review_score` -> 52 ring, `root_cause` -> 复盘结论,
+        `mistake_types` -> 错误归因 tags, `repeated_patterns` -> 历史重复模式,
+        `new_rules` -> 系统为你生成的新规则, `memory.memory_id` -> m_038 footer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRunRequest"
+            examples:
+              lossReview:
+                value:
+                  user_id: u_001
+                  self_reflection: 下跌后临时改了计划，没按止损走
+                  trade_record:
+                    stock: XX 科技 600xxx
+                    buy_price: 18.6
+                    sell_price: 17.45
+                    position: 30
+                    buy_reason: 短期涨得强
+                    sell_reason: 扛不住继续跌
+                    followed_plan: "no"
+                    had_stop_loss: "no"
+                    changed_plan: "yes"
+                    emotion: 害怕
+                    result: 亏损 -6.2%
+      responses:
+        "200":
+          description: Orchestrate envelope whose `report` is a ReviewReport.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrchestrateResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/research/search:
+    post:
+      tags: [Research]
+      summary: Public broker-report background search
+      description: |
+        Called explicitly for a research panel, and implicitly by
+        `/api/training/check` when the plan names a stock/code/theme. Returns
+        public report metadata only — never a recommendation. Failure is
+        surfaced via `available=false` + `fallback`/`errors`, not as a signal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResearchRequest"
+            examples:
+              byCode:
+                value:
+                  query: 300059 东方财富 研报
+                  limit: 5
+      responses:
+        "200":
+          description: Provider envelope (may be unavailable but still 200).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchResponse"
+
+  /api/questionnaires:
+    get:
+      tags: [Questionnaire]
+      summary: List questionnaires (1 full + 8 partial)
+      description: |
+        AssessmentPage uses this to offer the quick (partial) vs full path.
+        `full_assessment` is the entry point for a complete profile; the other
+        eight are partial diagnostic views.
+      responses:
+        "200":
+          description: Questionnaire summaries.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [questionnaires]
+                properties:
+                  questionnaires:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/QuestionnaireSummary"
+
+  /api/questionnaires/{questionnaire_id}:
+    get:
+      tags: [Questionnaire]
+      summary: Get one questionnaire with full question list
+      description: |
+        Frontend renders the question stepper from `questions[]`. For
+        `full_assessment` the `sections[]` array groups the 40 questions by
+        their source questionnaire so the UI can show section progress.
+      parameters:
+        - $ref: "#/components/parameters/QuestionnaireId"
+      responses:
+        "200":
+          description: Questionnaire definition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Questionnaire"
+        "404":
+          description: Unknown questionnaire id.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error, questionnaire_id]
+                properties:
+                  error:
+                    type: string
+                    const: questionnaire_not_found
+                  questionnaire_id:
+                    type: string
+
+  /api/questionnaires/{questionnaire_id}/submit:
+    post:
+      tags: [Questionnaire]
+      summary: Submit answers, get a fixed capability profile
+      description: |
+        Submission contract (enforced server-side before the LLM is called):
+          - `answers` must contain **every** `question_id` of the questionnaire
+          - an answer may be an empty string when the user skips a question
+          - missing / duplicate / unknown ids are rejected with HTTP 400 and a
+            machine-readable `detail` (JSON string of the offending ids)
+
+        On success the backend normalizes ranges, runs compliance, updates
+        `user_profiles`, stores `questionnaire_results`, and writes
+        `session_memories`. Returns the `QuestionnaireResponse` envelope whose
+        `report` is the fixed `QuestionnaireProfileReport`.
+      parameters:
+        - $ref: "#/components/parameters/QuestionnaireId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionnaireSubmitRequest"
+            examples:
+              riskControl:
+                value:
+                  user_id: u_001
+                  use_llm: true
+                  answers:
+                    - { question_id: q11, answer: 单笔最多亏总资金 2% }
+                    - { question_id: q12, answer: 会，按结构破位设止损 }
+                    - { question_id: q13, answer: 按原计划处理，不盲目补仓 }
+                    - { question_id: q14, answer: 止损是控制不确定性 }
+                    - { question_id: q15, answer: 减小仓位或放弃交易 }
+      responses:
+        "200":
+          description: Questionnaire envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionnaireResponse"
+        "400":
+          $ref: "#/components/responses/InvalidQuestionnaireAnswers"
+        "500":
+          description: |
+            Internal error. Note: an unknown `questionnaire_id` on submit is
+            not specially handled and surfaces here as `internal_error`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalError"
+
+components:
+  parameters:
+    QuestionnaireId:
+      name: questionnaire_id
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - full_assessment
+          - trading_cognition
+          - analysis_framework
+          - risk_control
+          - position_management
+          - trade_plan
+          - emotion_discipline
+          - review_ability
+          - scenario_maturity
+      description: One of the 8 partial configs or the synthesized full set.
+
+  responses:
+    InternalError:
+      description: Unhandled backend error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/InternalError"
+    InvalidQuestionnaireAnswers:
+      description: |
+        Answer set does not match the questionnaire contract. `detail` is a
+        JSON-encoded string containing `missing_question_ids`,
+        `unknown_question_ids`, `duplicate_question_ids`,
+        `expected_question_ids` — the frontend can parse it to highlight fields.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, detail]
+            properties:
+              error:
+                type: string
+                const: invalid_questionnaire_answers
+              detail:
+                type: string
+                description: JSON string of the id diff.
+
+  schemas:
+
+    # ---------- Shared building blocks ----------
+
+    ComplianceNotice:
+      type: string
+      description: Mandatory footer string the frontend renders under every report.
+      const: 本系统仅用于投资教育与交易能力训练，不构成任何投资建议、个股推荐或买卖信号。
+
+    DimensionScores:
+      type: object
+      description: Five fixed capability dimensions, each 0–20.
+      required:
+        - market_understanding
+        - analysis_framework
+        - risk_control
+        - execution_discipline
+        - review_ability
+      properties:
+        market_understanding: { type: integer, minimum: 0, maximum: 20, description: 市场理解 }
+        analysis_framework:   { type: integer, minimum: 0, maximum: 20, description: 分析框架 }
+        risk_control:         { type: integer, minimum: 0, maximum: 20, description: 风险控制 }
+        execution_discipline: { type: integer, minimum: 0, maximum: 20, description: 执行纪律 }
+        review_ability:       { type: integer, minimum: 0, maximum: 20, description: 复盘能力 }
+
+    ToolTrace:
+      type: object
+      description: One step of the MCP-style tool chain. Drives the demo/trace panel.
+      required: [name, status, timestamp]
+      properties:
+        name:
+          type: string
+          example: training_engine
+        status:
+          type: string
+          enum: [success, skipped, rewritten, fallback]
+        detail:
+          type: string
+          default: ""
+        input_summary:
+          type: object
+          additionalProperties: true
+        output_summary:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      description: Capability portrait. Powers the HomePage/Assessment radar card.
+      required: [user_id, trader_type, total_score, dimension_scores, training_stage, risk_level, updated_at]
+      properties:
+        user_id: { type: string, example: u_001 }
+        trader_type:
+          type: string
+          description: Derived from total_score.
+          enum: [新手型, 经验型散户, 规则型交易者, 成熟交易者, 专业型交易者]
+        total_score: { type: integer, minimum: 0, maximum: 100 }
+        dimension_scores: { $ref: "#/components/schemas/DimensionScores" }
+        risk_tags:
+          type: array
+          items: { type: string }
+          example: [追涨, 止损缺失, 仓位偏高]
+        weaknesses:
+          type: array
+          items: { type: string }
+          example: [风险控制, 执行纪律]
+        training_stage:
+          type: string
+          enum: [foundation, advanced]
+        risk_level:
+          type: string
+          enum: [low, medium, medium_high, high]
+        updated_at: { type: string, format: date-time }
+
+    SessionMemory:
+      type: object
+      description: Long-term memory record written after every session.
+      required: [memory_id, user_id, session_type, summary, decision_pattern, tags, created_at]
+      properties:
+        memory_id: { type: string, example: mem_4f1c9a2b7e10 }
+        user_id: { type: string }
+        session_type:
+          type: string
+          description: assessment | training | review | questionnaire_assessment
+        summary: { type: string }
+        decision_pattern: { type: string, example: 追涨、止损缺失 }
+        tags:
+          type: array
+          items: { type: string }
+        report_id:
+          type: [string, "null"]
+        created_at: { type: string, format: date-time }
+
+    # ---------- Request bodies ----------
+
+    OrchestrateRequest:
+      type: object
+      description: |
+        Superset payload for the unified entry. Only `message` is needed for
+        the smart input box; the typed endpoints (training/review/assessment)
+        send the structured sub-objects below.
+      properties:
+        user_id:
+          type: string
+          default: demo_user
+          description: Client-managed id; defaults to demo_user if omitted.
+        entry:
+          type: string
+          enum: [assessment, training, review, demo]
+          description: Optional. Inferred from `message` keywords if absent.
+        message:
+          type: string
+          description: Free-text trade question.
+        scenario:
+          type: string
+          description: TrainingPage chip id (e.g. add_position, loss, chase). Used for intent.
+        form_data:
+          type: object
+          additionalProperties: true
+          description: Generic alias accepted as trade_plan (training) or trade_record (review).
+        trade_plan:
+          $ref: "#/components/schemas/TradePlan"
+        trade_record:
+          $ref: "#/components/schemas/TradeRecord"
+        answers:
+          type: array
+          description: Assessment free-text answers (heuristic path).
+          items: { type: string }
+        trade_records:
+          type: array
+          items: { $ref: "#/components/schemas/TradeRecord" }
+        self_reflection:
+          type: string
+          description: Review path — user self-summary.
+        research_limit:
+          type: integer
+          default: 5
+          description: Max public reports to fold into training scoring.
+
+    AssessmentRunRequest:
+      type: object
+      properties:
+        user_id: { type: string, default: demo_user }
+        use_llm:
+          type: boolean
+          default: true
+          description: true asks Kimi/OpenAI-compatible endpoint for final assessment wording/scoring; failure falls back to heuristic report.
+        answers:
+          type: array
+          items: { type: string }
+          description: Free-text answers to the 8 quick situational questions.
+        trade_records:
+          type: array
+          items: { $ref: "#/components/schemas/TradeRecord" }
+
+    TrainingCheckRequest:
+      type: object
+      properties:
+        user_id: { type: string, default: demo_user }
+        message: { type: string }
+        scenario:
+          type: string
+          enum: [buy, hold, add, reduce, loss, chase, check]
+          description: "Seven-choice intent chip: buy=准备买入, hold=已经持仓, add=想加仓, reduce=想减仓, loss=亏损后想补仓, chase=看到上涨想追, check=检查交易计划."
+        use_llm:
+          type: boolean
+          default: true
+          description: true asks Kimi/OpenAI-compatible endpoint for final training wording; failure falls back to heuristic report. Set false for deterministic smoke tests.
+        research_limit: { type: integer, default: 5 }
+        trade_plan: { $ref: "#/components/schemas/TradePlan" }
+        form_data:
+          $ref: "#/components/schemas/TradePlan"
+          description: Accepted as an alias for trade_plan.
+
+    ReviewRunRequest:
+      type: object
+      properties:
+        user_id: { type: string, default: demo_user }
+        self_reflection: { type: string }
+        trade_record: { $ref: "#/components/schemas/TradeRecord" }
+        trade_table:
+          type: array
+          description: Frontend table rows. Backend converts row field/value pairs to trade_record JSON before review.
+          items:
+            type: object
+            properties:
+              field: { type: string, example: 买入价格 }
+              value: {}
+              key: { type: string }
+              label: { type: string }
+              answer: {}
+        form_data:
+          $ref: "#/components/schemas/TradeRecord"
+          description: Accepted as an alias for trade_record.
+        use_llm:
+          type: boolean
+          default: true
+          description: true asks Kimi/OpenAI-compatible endpoint for final review wording; failure falls back to heuristic report. Set false for deterministic smoke tests.
+
+    ResearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          example: 300059 东方财富 研报
+        limit:
+          type: integer
+          default: 5
+
+    QuestionnaireSubmitRequest:
+      type: object
+      required: [answers]
+      properties:
+        user_id:
+          type: string
+          default: demo_user
+        questionnaire_id:
+          type: string
+          description: Only honored by /api/assessment/full; ignored on the path-scoped submit.
+        use_llm:
+          type: boolean
+          default: true
+          description: false forces the deterministic heuristic fallback (no Kimi call).
+        answers:
+          type: array
+          description: Must cover every question_id exactly once.
+          items:
+            type: object
+            required: [question_id]
+            properties:
+              question_id: { type: string, example: q11 }
+              answer:
+                type: [string, "null"]
+                description: Empty string allowed when the user skips.
+
+    TradePlan:
+      type: object
+      description: |
+        Trading plan collected by the TrainingPage form. English keys are
+        canonical; the backend also accepts the Chinese label as an alias
+        (shown in parentheses). The lightweight pre-buy form marks only three
+        fields as required-for-scoring: stock, reason, and risk_boundary.
+        Position and holding_period are optional context fields.
+      properties:
+        stock:
+          type: string
+          description: 股票名称/代码. Also accepted as `symbol` / `股票名称/代码`. Triggers research.
+        scenario:
+          type: string
+          enum: [buy, hold, add, reduce, loss, chase, check]
+          description: Optional duplicate of top-level seven-choice intent.
+        position:
+          oneOf: [{ type: number }, { type: string }]
+          description: 计划买入仓位/金额 (选填). Percent or amount; also `planned_position` / `current_position` / `当前仓位` / `计划买入仓位`. >=60 -> 仓位偏高.
+        buy_price:
+          oneOf: [{ type: number }, { type: string }]
+          description: 买入价.
+        add_ratio:
+          oneOf: [{ type: number }, { type: string }]
+          description: 计划加仓/减仓比例.
+        reason:
+          type: string
+          description: 买入理由 (必填) — alias 买入理由.
+        risk_boundary:
+          type: string
+          description: 风险边界 (必填) — alias 风险边界 / 如果判断错了怎么办. Can describe max acceptable loss, stop condition, or logic invalidation.
+        stop_loss:
+          type: string
+          description: 旧字段兼容：止损计划. Accepted as risk_boundary.
+        max_loss:
+          type: string
+          description: 旧字段兼容：最大可接受亏损. Accepted as risk_boundary.
+        holding_period:
+          type: string
+          description: 预期持有周期 (选填) — alias 预期持有周期. e.g. 日内 / 1-3 天 / 1-2 周 / 1 个月以上.
+        emotion:
+          type: string
+          description: 当前情绪状态 (选填/后置采集) — alias 当前情绪状态. e.g. 平稳 / 兴奋·担心踏空 / 恐惧·想止损 / 报复性·想翻本.
+        invalid_condition:
+          type: string
+          description: 旧字段兼容：交易失效条件 — alias 失效条件. Accepted as risk_boundary.
+      additionalProperties: true
+
+    TradeRecord:
+      type: object
+      description: A completed trade for the ReviewPage form (and assessment imports).
+      properties:
+        stock: { type: string }
+        buy_time: { type: string }
+        sell_time: { type: string }
+        buy_price: { oneOf: [{ type: number }, { type: string }] }
+        sell_price: { oneOf: [{ type: number }, { type: string }] }
+        position:
+          oneOf: [{ type: number }, { type: string }]
+          description: Percent. <=40 scores full position_management.
+        buy_reason:
+          type: string
+          description: Used (with stop_loss_plan) for plan_integrity scoring.
+        sell_reason: { type: string }
+        stop_loss_plan:
+          type: string
+          description: Presence scores full risk_control.
+        followed_plan:
+          type: string
+          description: Truthy (是/yes/true/已执行) scores full execution_consistency.
+        had_stop_loss: { type: string }
+        changed_plan: { type: string }
+        holding_period: { type: string }
+        emotion: { type: string }
+        result: { type: string }
+        self_summary: { type: string }
+      additionalProperties: true
+
+    # ---------- Reports ----------
+
+    AssessmentReport:
+      type: object
+      description: From assessment_engine. Radar = dimension_scores; tag = trader_type.
+      required: [report_id, total_score, trader_type, dimension_scores, summary, created_at]
+      properties:
+        report_id: { type: string, example: assessment_9b2c... }
+        total_score: { type: integer, minimum: 0, maximum: 100 }
+        trader_type: { type: string }
+        dimension_scores: { $ref: "#/components/schemas/DimensionScores" }
+        weaknesses:
+          type: array
+          items: { type: string }
+        risk_tags:
+          type: array
+          items: { type: string }
+        next_training_focus:
+          type: array
+          items: { type: string }
+          example: [交易前止损与最大亏损训练, 冲动交易拦截训练]
+        summary: { type: string }
+        created_at: { type: string, format: date-time }
+
+    TrainingReport:
+      type: object
+      description: >
+        From training_engine plus optional Kimi decision-support wording.
+        Hard fields such as score, rule_status, missing_fields, and risk_tags remain backend authoritative.
+      required: [report_id, plan_score, rule_status, training_decision, risk_tags, missing_fields, training_tasks, summary, created_at]
+      properties:
+        report_id: { type: string }
+        plan_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 计划完整度 ring (e.g. 46/100).
+        rule_status:
+          type: string
+          enum: [passed, not_passed]
+        training_decision:
+          type: string
+          example: 当前不满足本次训练规则
+        risk_tags:
+          type: array
+          items: { type: string }
+          example: [追涨, 止损缺失, 仓位偏高]
+        missing_fields:
+          type: array
+          items: { type: string }
+          description: Chinese field labels still empty. Count -> "需补全 N 项".
+        training_tasks:
+          type: array
+          items: { type: string }
+          description: 本次训练任务 list. Also persisted as training_tasks records.
+        decision_support_advice:
+          type: array
+          items: { type: string }
+          description: 买入前检查建议，不包含直接买卖结论。
+        risk_warnings:
+          type: array
+          items: { type: string }
+          description: 基于 backend risk_tags and stock_context 的风险提醒。
+        missing_research_items:
+          type: array
+          items: { type: string }
+          description: 还需要补充核对的公开资料。
+        plan_improvement_tasks:
+          type: array
+          items: { type: string }
+          description: 针对交易计划结构的补强任务。
+        pause_conditions:
+          type: array
+          items: { type: string }
+          description: 触发后应暂停本次计划并补充研究或复盘的条件。
+        task_ids:
+          type: array
+          items: { type: string }
+        research_context_used:
+          type: integer
+          description: Number of public reports from stock_context folded into scoring.
+        stock_context_used:
+          type: boolean
+          description: Whether at least one market data source returned usable stock context.
+        stock_context_summary:
+          type: object
+          additionalProperties: true
+          description: Compact stock context passed into the training LLM prompt; training background only, not advice.
+        next_requirement: { type: string }
+        summary: { type: string }
+        created_at: { type: string, format: date-time }
+
+    ReviewReport:
+      type: object
+      description: From review_engine. Drives the ReviewPage report card.
+      required: [report_id, review_score, dimension_scores, mistake_types, root_cause, repeated_patterns, new_rules, summary, created_at]
+      properties:
+        report_id: { type: string }
+        review_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        dimension_scores:
+          type: object
+          description: Review-specific 0–20 dimensions (not the capability five).
+          required: [plan_integrity, execution_consistency, risk_control, position_management, emotion_control]
+          properties:
+            plan_integrity: { type: integer, minimum: 0, maximum: 20 }
+            execution_consistency: { type: integer, minimum: 0, maximum: 20 }
+            risk_control: { type: integer, minimum: 0, maximum: 20 }
+            position_management: { type: integer, minimum: 0, maximum: 20 }
+            emotion_control: { type: integer, minimum: 0, maximum: 20 }
+        mistake_types:
+          type: array
+          items: { type: string }
+          example: [计划缺失, 止损不执行]
+        root_cause:
+          type: string
+          example: 执行纪律与交易前计划不足，而非单纯信息不足
+        repeated_patterns:
+          type: array
+          items: { type: string }
+          description: Intersection with historical memory tags — 历史重复模式.
+        new_rules:
+          type: array
+          items: { type: string }
+        summary: { type: string }
+        created_at: { type: string, format: date-time }
+
+    QuestionnaireProfileReport:
+      type: object
+      description: |
+        Fixed schema (`schema_version: questionnaire_profile.v1`) returned by
+        the questionnaire/LLM path after range-normalization + compliance.
+      required:
+        - report_id
+        - questionnaire_id
+        - total_score
+        - dimension_scores
+        - trader_type
+        - risk_level
+        - profile_summary
+        - schema_version
+        - created_at
+      properties:
+        report_id: { type: string }
+        questionnaire_id: { type: string }
+        total_score: { type: integer, minimum: 0, maximum: 100 }
+        dimension_scores: { $ref: "#/components/schemas/DimensionScores" }
+        trader_type:
+          type: string
+          enum: [新手型, 经验型散户, 规则型交易者, 成熟交易者, 专业型交易者]
+        risk_level:
+          type: string
+          enum: [low, medium, medium_high, high]
+        weaknesses:
+          type: array
+          items: { type: string }
+        risk_tags:
+          type: array
+          items: { type: string }
+        profile_summary: { type: string }
+        summary:
+          type: string
+          description: Mirror of profile_summary.
+        evidence:
+          type: array
+          items:
+            type: object
+            properties:
+              question_id: { type: string }
+              finding: { type: string }
+        next_training_focus:
+          type: array
+          items: { type: string }
+        recommended_tasks:
+          type: array
+          items: { type: string }
+        schema_version:
+          type: string
+          const: questionnaire_profile.v1
+        created_at: { type: string, format: date-time }
+
+    # ---------- Response envelopes ----------
+
+    OrchestrateResponse:
+      type: object
+      description: Shared envelope for orchestrate / assessment-run / training-check / review-run.
+      required: [entry, intent, tool_trace, report, memory_written, memory]
+      properties:
+        entry:
+          type: string
+          enum: [assessment, training, review]
+        intent:
+          type: string
+          enum:
+            - ability_assessment
+            - trade_review
+            - add_position_training
+            - reduce_position_training
+            - loss_averaging_training
+            - pre_trade_training
+            - behavior_training
+        tool_trace:
+          type: array
+          items: { $ref: "#/components/schemas/ToolTrace" }
+        report:
+          oneOf:
+            - $ref: "#/components/schemas/AssessmentReport"
+            - $ref: "#/components/schemas/TrainingReport"
+            - $ref: "#/components/schemas/ReviewReport"
+          description: Concrete type determined by `entry`.
+        memory_written:
+          type: boolean
+        memory:
+          $ref: "#/components/schemas/SessionMemory"
+
+    QuestionnaireResponse:
+      type: object
+      required: [entry, intent, questionnaire, tool_trace, report, memory_written, memory]
+      properties:
+        entry:
+          type: string
+          const: assessment
+        intent:
+          type: string
+          const: questionnaire_assessment
+        questionnaire:
+          type: object
+          required: [id, title]
+          properties:
+            id: { type: string }
+            title: { type: string }
+        tool_trace:
+          type: array
+          items: { $ref: "#/components/schemas/ToolTrace" }
+        report:
+          $ref: "#/components/schemas/QuestionnaireProfileReport"
+        memory_written:
+          type: boolean
+        memory:
+          $ref: "#/components/schemas/SessionMemory"
+
+    MarketKlineResponse:
+      type: object
+      required: [available, symbol, market, source, fallback, errors, quote, kline, technical, compliance_note]
+      properties:
+        available:
+          type: boolean
+          description: false when symbol is invalid or the provider returned no drawable K-line rows.
+        symbol:
+          type: string
+          description: Normalized 6-digit A-share code.
+          example: "300059"
+        market:
+          type: string
+          enum: [A]
+        source:
+          type: string
+          description: Provider source id, not a third-party URL.
+          example: eastmoney_push2
+        fallback:
+          type: boolean
+        errors:
+          type: array
+          items: { type: string }
+        quote:
+          $ref: "#/components/schemas/MarketQuote"
+        kline:
+          type: array
+          items: { $ref: "#/components/schemas/MarketKlineRow" }
+        technical:
+          $ref: "#/components/schemas/MarketTechnical"
+        compliance_note:
+          type: string
+          const: 公开行情只作为交易能力训练背景，不构成买入、卖出、持有或加仓建议。
+
+    MarketQuote:
+      type: object
+      description: Quote fields safe for the training chart header. No request_url is exposed.
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        price: { type: number }
+        change: { type: number }
+        change_pct: { type: number }
+        turnover_rate: { type: number }
+        amplitude: { type: number }
+        amount: { type: number }
+        volume: { type: number }
+
+    MarketKlineRow:
+      type: object
+      required: [date, open, close, high, low, volume, amount, change_pct, turnover_rate]
+      properties:
+        date: { type: string, example: "2026-05-15" }
+        open: { type: number }
+        close: { type: number }
+        high: { type: number }
+        low: { type: number }
+        volume: { type: [number, "null"] }
+        amount: { type: [number, "null"] }
+        change_pct: { type: [number, "null"] }
+        turnover_rate: { type: [number, "null"] }
+
+    MarketTechnical:
+      type: object
+      required: [available]
+      properties:
+        available: { type: boolean }
+        as_of: { type: string }
+        latest_close: { type: number }
+        change_pct_3d: { type: [number, "null"] }
+        change_pct_5d: { type: [number, "null"] }
+        change_pct_20d: { type: [number, "null"] }
+        volatility_20d: { type: [number, "null"] }
+
+    ResearchResponse:
+      type: object
+      required: [available, reports, message]
+      properties:
+        available:
+          type: boolean
+          description: false when the public source failed or returned nothing.
+        reports:
+          type: array
+          items: { $ref: "#/components/schemas/ResearchReport" }
+        message:
+          type: string
+        provider:
+          type: string
+        fallback:
+          type: boolean
+        errors:
+          type: array
+          items: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ResearchReport:
+      type: object
+      properties:
+        title: { type: string }
+        broker: { type: string }
+        date: { type: string }
+        summary: { type: string }
+        type: { type: string }
+        stock: { type: string }
+        stock_code: { type: string }
+        url:
+          type: string
+          description: Best-effort PDF link; may be empty.
+
+    QuestionnaireSummary:
+      type: object
+      required: [id, title, question_count]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        dimensions:
+          type: array
+          items: { type: string }
+        question_count: { type: integer }
+
+    Questionnaire:
+      type: object
+      required: [id, title, questions]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        dimensions:
+          type: array
+          items: { type: string }
+        questions:
+          type: array
+          items: { $ref: "#/components/schemas/Question" }
+        score_weight:
+          type: object
+          additionalProperties: { type: number }
+        sections:
+          type: array
+          description: Present only for full_assessment — groups the 40 questions.
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              title: { type: string }
+              question_ids:
+                type: array
+                items: { type: string }
+
+    Question:
+      type: object
+      required: [id, text]
+      properties:
+        id: { type: string, example: q11 }
+        type:
+          type: string
+          example: open_text
+        text: { type: string }
+        required: { type: boolean }
+        rubric:
+          type: string
+          description: Scoring guidance for the LLM (not shown to the user).
+
+    # ---------- Errors ----------
+
+    MemorySnapshot:
+      type: object
+      description: Raw store. Arrays are newest-first; user_profiles is keyed by user_id.
+      properties:
+        user_profiles:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/UserProfile" }
+        session_memories:
+          type: array
+          items: { $ref: "#/components/schemas/SessionMemory" }
+        training_tasks:
+          type: array
+          items: { type: object, additionalProperties: true }
+        trade_records:
+          type: array
+          items: { type: object, additionalProperties: true }
+        assessment_results:
+          type: array
+          items: { type: object, additionalProperties: true }
+        questionnaire_results:
+          type: array
+          items: { type: object, additionalProperties: true }
+        review_reports:
+          type: array
+          items: { type: object, additionalProperties: true }
+        tool_call_logs:
+          type: array
+          items: { type: object, additionalProperties: true }
+        compliance_logs:
+          type: array
+          items: { type: object, additionalProperties: true }
+        research_reports:
+          type: array
+          items: { type: object, additionalProperties: true }
+
+    InternalError:
+      type: object
+      required: [error, detail]
+      properties:
+        error:
+          type: string
+          enum: [internal_error, not_found]
+        detail:
+          type: string
+        path:
+          type: string
+          description: Present on not_found.

@@ -1,0 +1,14 @@
+{
+  "id": "analysis_framework",
+  "title": "行情分析框架问卷",
+  "description": "评估用户是否有稳定的标的、行业和市场环境判断框架。",
+  "dimensions": ["analysis_framework", "market_understanding"],
+  "questions": [
+    {"id": "q6", "type": "open_text", "text": "请你分析一个标的时，通常会看哪些信息？按重要性排序。", "required": true, "rubric": "关注是否有稳定信息层级，而非只听消息。"},
+    {"id": "q7", "type": "single_choice_with_reason", "text": "你更偏向哪种交易方式？A. 基本面中长期 B. 技术面波段 C. 事件驱动 D. 量化/规则交易 E. 情绪/题材交易。为什么？", "required": true, "rubric": "关注方法与执行规则是否匹配。"},
+    {"id": "q8", "type": "open_text", "text": "当基本面看好，但技术面持续走弱时，你会怎么处理？", "required": true, "rubric": "关注冲突信息处理和失效条件。"},
+    {"id": "q9", "type": "open_text", "text": "当一只股票大涨后，你如何判断它是趋势开始，还是短线过热？", "required": true, "rubric": "关注成交、位置、风险回报和不追涨原则。"},
+    {"id": "q10", "type": "open_text", "text": "你如何判断市场整体环境适不适合交易？", "required": true, "rubric": "关注市场环境、流动性、情绪、仓位约束。"}
+  ],
+  "score_weight": {"analysis_framework": 0.75, "market_understanding": 0.25}
+}

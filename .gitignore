@@ -1,0 +1,39 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets and local config
+.env
+.env.local
+.env.*.local
+*.local.env
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa*
+.netrc
+
+# Embedded/local Git metadata
+**/.git/
+
+# Dependencies and generated builds
+node_modules/
+AITradingFrontend/node_modules/
+AITradingFrontend/dist/
+
+# Runtime artifacts
+logs/runtime/
+*.log
+*.pid
+
+# Python/runtime caches
+__pycache__/
+*.py[cod]
+.cache/
+**/.cache/

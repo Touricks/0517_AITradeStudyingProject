@@ -1,0 +1,1 @@
+skillui --url https://ai.eastmoney.com/miaoxiang/--name linear --mode ultra

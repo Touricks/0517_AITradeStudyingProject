@@ -1,0 +1,609 @@
+{
+  "test_name": "training_agent_kimi_reference_test",
+  "passed": true,
+  "command": "python3 logs/training_agent_kimi_reference_test.py",
+  "request_payload": {
+    "user_id": "logs_training_agent_ref",
+    "entry": "training",
+    "scenario": "buy",
+    "message": "我准备买入300059，想让系统检查行为风险，不需要直接买卖建议。",
+    "use_llm": true,
+    "research_limit": 1,
+    "trade_plan": {
+      "stock": "300059",
+      "reason": "AI 金融题材活跃，近期突破平台，但我想先验证计划完整性。",
+      "risk_boundary": "如果跌回平台内或单笔亏损超过账户 1%，取消本次计划。",
+      "position": "20%",
+      "holding_period": "1-2周"
+    }
+  },
+  "kimi_http_request": {
+    "model": "mock-moonshot-v1-8k",
+    "messages": [
+      {
+        "role": "system",
+        "content": "你是交易行为训练与买入前决策支持引擎。只输出 JSON 对象，不要 Markdown。只能基于后端评分结果解释交易计划完整度、行为风险、需要补充的公开资料和训练任务。不能提供买入、卖出、加仓、减仓建议，不能提供买卖点、目标价或收益承诺。"
+      },
+      {
+        "role": "user",
+        "content": "{\"task\": \"根据用户交易意图、交易计划、stock_context 和 heuristic_report，生成买入前决策支持建议。stock_context 只能用于识别用户行为逻辑与公开背景是否一致，以及提示还缺哪些公开资料，不要判断个股是否值得买卖。plan_score、rule_status、missing_fields、risk_tags 完全以 heuristic_report 为准，不要重算、不要覆盖、不要扩展。当前必填字段只有 stock、reason、risk_boundary，不要要求止损计划、最大可接受亏损或当前情绪状态。输出必须是训练与检查建议，例如资料核对、风险提醒、计划改进任务和暂停条件；不要出现“建议买入/卖出/加仓/减仓”“可以买/可以卖”“目标价”等直接投资建议。\", \"user_payload\": {\"message\": \"我准备买入300059，想让系统检查行为风险，不需要直接买卖建议。\", \"scenario\": \"buy\", \"trade_plan\": {\"stock\": \"300059\", \"reason\": \"AI 金融题材活跃，近期突破平台，但我想先验证计划完整性。\", \"risk_boundary\": \"如果跌回平台内或单笔亏损超过账户 1%，取消本次计划。\", \"position\": \"20%\", \"holding_period\": \"1-2周\"}, \"stock_context\": {\"usage\": \"training_context_only\", \"compliance_note\": \"只用于交易能力训练背景，不输出买入、卖出、持有等投资建议。\", \"symbol\": \"300059\", \"market\": \"A\", \"quote\": {}, \"technical\": {\"available\": true, \"as_of\": \"2026-05-15\", \"latest_close\": 19.73, \"change_pct_3d\": -7.24, \"change_pct_5d\": -3.71, \"change_pct_20d\": -1.6, \"volatility_20d\": 1.7, \"consecutive_up_days\": 0, \"distance_to_ma5_pct\": -4.72, \"distance_to_ma20_pct\": -2.76, \"distance_to_20d_high_pct\": -8.66, \"distance_to_20d_low_pct\": 0.92}, \"company_profile\": {}, \"announcements\": {\"ok\": false, \"source\": \"\", \"items\": [], \"errors\": [\"eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>\", \"cninfo: no fetcher registered\", \"akshare: no fetcher registered\"]}, \"news\": {\"ok\": false, \"source\": \"\", \"items\": [], \"errors\": [\"duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>\", \"akshare: no fetcher registered\"]}, \"reports\": {\"ok\": false, \"source\": \"\", \"items\": [], \"errors\": [\"eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>\"]}, \"source_status\": {\"quote\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>\", \"tencent_qt: no fetcher registered\", \"sina_quote: no fetcher registered\"]}, \"kline\": {\"ok\": true, \"source\": \"tencent_fqkline\", \"fallback\": true, \"errors\": [\"eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>\"]}, \"announcements\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>\", \"cninfo: no fetcher registered\", \"akshare: no fetcher registered\"]}, \"news\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>\", \"akshare: no fetcher registered\"]}, \"company_profile\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_profile: request failed: <urlopen error [Errno 61] Connection refused>\", \"cninfo: no fetcher registered\"]}, \"reports\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>\"]}}, \"behavior_observation_hints\": []}}, \"heuristic_report\": {\"report_id\": \"training_162877895d2c\", \"scenario\": \"buy\", \"scenario_label\": \"我准备买入\", \"plan_score\": 85, \"rule_status\": \"passed\", \"training_decision\": \"满足本次训练规则\", \"risk_tags\": [], \"missing_fields\": [], \"training_tasks\": [], \"research_context_used\": 0, \"next_requirement\": \"下一次训练需先写清股票名称/代码、买入理由与风险边界。\", \"summary\": \"满足本次训练规则，计划完整度 85/100，主要风险标签：暂无。\", \"created_at\": \"2026-05-17T09:39:50+00:00\", \"stock_context_used\": true, \"stock_context_summary\": {\"usage\": \"training_context_only\", \"compliance_note\": \"只用于交易能力训练背景，不输出买入、卖出、持有等投资建议。\", \"symbol\": \"300059\", \"market\": \"A\", \"quote\": {}, \"technical\": {\"available\": true, \"as_of\": \"2026-05-15\", \"latest_close\": 19.73, \"change_pct_3d\": -7.24, \"change_pct_5d\": -3.71, \"change_pct_20d\": -1.6, \"volatility_20d\": 1.7, \"consecutive_up_days\": 0, \"distance_to_ma5_pct\": -4.72, \"distance_to_ma20_pct\": -2.76, \"distance_to_20d_high_pct\": -8.66, \"distance_to_20d_low_pct\": 0.92}, \"company_profile\": {}, \"announcements\": {\"ok\": false, \"source\": \"\", \"items\": [], \"errors\": [\"eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>\", \"cninfo: no fetcher registered\", \"akshare: no fetcher registered\"]}, \"news\": {\"ok\": false, \"source\": \"\", \"items\": [], \"errors\": [\"duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>\", \"akshare: no fetcher registered\"]}, \"reports\": {\"ok\": false, \"source\": \"\", \"items\": [], \"errors\": [\"eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>\"]}, \"source_status\": {\"quote\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>\", \"tencent_qt: no fetcher registered\", \"sina_quote: no fetcher registered\"]}, \"kline\": {\"ok\": true, \"source\": \"tencent_fqkline\", \"fallback\": true, \"errors\": [\"eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>\"]}, \"announcements\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>\", \"cninfo: no fetcher registered\", \"akshare: no fetcher registered\"]}, \"news\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>\", \"akshare: no fetcher registered\"]}, \"company_profile\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_profile: request failed: <urlopen error [Errno 61] Connection refused>\", \"cninfo: no fetcher registered\"]}, \"reports\": {\"ok\": false, \"source\": \"\", \"fallback\": true, \"errors\": [\"eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>\"]}}, \"behavior_observation_hints\": []}}, \"required_schema\": {\"training_decision\": \"string，必须服从 heuristic_report.rule_status\", \"training_tasks\": [\"string，训练任务，不含直接买卖指令\"], \"summary\": \"string，解释评分结果和主要行为风险\", \"decision_support_advice\": [\"string，买入前检查建议，不含直接买卖结论\"], \"risk_warnings\": [\"string，基于 risk_tags 和 stock_context 的风险提醒\"], \"missing_research_items\": [\"string，还需要补充核对的公开资料\"], \"plan_improvement_tasks\": [\"string，交易计划需要补强的任务\"], \"pause_conditions\": [\"string，触发后应暂停本次计划的条件\"]}}"
+      }
+    ],
+    "temperature": 0.0,
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "kimi_prompt_user_json": {
+    "task": "根据用户交易意图、交易计划、stock_context 和 heuristic_report，生成买入前决策支持建议。stock_context 只能用于识别用户行为逻辑与公开背景是否一致，以及提示还缺哪些公开资料，不要判断个股是否值得买卖。plan_score、rule_status、missing_fields、risk_tags 完全以 heuristic_report 为准，不要重算、不要覆盖、不要扩展。当前必填字段只有 stock、reason、risk_boundary，不要要求止损计划、最大可接受亏损或当前情绪状态。输出必须是训练与检查建议，例如资料核对、风险提醒、计划改进任务和暂停条件；不要出现“建议买入/卖出/加仓/减仓”“可以买/可以卖”“目标价”等直接投资建议。",
+    "user_payload": {
+      "message": "我准备买入300059，想让系统检查行为风险，不需要直接买卖建议。",
+      "scenario": "buy",
+      "trade_plan": {
+        "stock": "300059",
+        "reason": "AI 金融题材活跃，近期突破平台，但我想先验证计划完整性。",
+        "risk_boundary": "如果跌回平台内或单笔亏损超过账户 1%，取消本次计划。",
+        "position": "20%",
+        "holding_period": "1-2周"
+      },
+      "stock_context": {
+        "usage": "training_context_only",
+        "compliance_note": "只用于交易能力训练背景，不输出买入、卖出、持有等投资建议。",
+        "symbol": "300059",
+        "market": "A",
+        "quote": {},
+        "technical": {
+          "available": true,
+          "as_of": "2026-05-15",
+          "latest_close": 19.73,
+          "change_pct_3d": -7.24,
+          "change_pct_5d": -3.71,
+          "change_pct_20d": -1.6,
+          "volatility_20d": 1.7,
+          "consecutive_up_days": 0,
+          "distance_to_ma5_pct": -4.72,
+          "distance_to_ma20_pct": -2.76,
+          "distance_to_20d_high_pct": -8.66,
+          "distance_to_20d_low_pct": 0.92
+        },
+        "company_profile": {},
+        "announcements": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>",
+            "cninfo: no fetcher registered",
+            "akshare: no fetcher registered"
+          ]
+        },
+        "news": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>",
+            "akshare: no fetcher registered"
+          ]
+        },
+        "reports": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>"
+          ]
+        },
+        "source_status": {
+          "quote": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>",
+              "tencent_qt: no fetcher registered",
+              "sina_quote: no fetcher registered"
+            ]
+          },
+          "kline": {
+            "ok": true,
+            "source": "tencent_fqkline",
+            "fallback": true,
+            "errors": [
+              "eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>"
+            ]
+          },
+          "announcements": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>",
+              "cninfo: no fetcher registered",
+              "akshare: no fetcher registered"
+            ]
+          },
+          "news": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>",
+              "akshare: no fetcher registered"
+            ]
+          },
+          "company_profile": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_profile: request failed: <urlopen error [Errno 61] Connection refused>",
+              "cninfo: no fetcher registered"
+            ]
+          },
+          "reports": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>"
+            ]
+          }
+        },
+        "behavior_observation_hints": []
+      }
+    },
+    "heuristic_report": {
+      "report_id": "training_162877895d2c",
+      "scenario": "buy",
+      "scenario_label": "我准备买入",
+      "plan_score": 85,
+      "rule_status": "passed",
+      "training_decision": "满足本次训练规则",
+      "risk_tags": [],
+      "missing_fields": [],
+      "training_tasks": [],
+      "research_context_used": 0,
+      "next_requirement": "下一次训练需先写清股票名称/代码、买入理由与风险边界。",
+      "summary": "满足本次训练规则，计划完整度 85/100，主要风险标签：暂无。",
+      "created_at": "2026-05-17T09:39:50+00:00",
+      "stock_context_used": true,
+      "stock_context_summary": {
+        "usage": "training_context_only",
+        "compliance_note": "只用于交易能力训练背景，不输出买入、卖出、持有等投资建议。",
+        "symbol": "300059",
+        "market": "A",
+        "quote": {},
+        "technical": {
+          "available": true,
+          "as_of": "2026-05-15",
+          "latest_close": 19.73,
+          "change_pct_3d": -7.24,
+          "change_pct_5d": -3.71,
+          "change_pct_20d": -1.6,
+          "volatility_20d": 1.7,
+          "consecutive_up_days": 0,
+          "distance_to_ma5_pct": -4.72,
+          "distance_to_ma20_pct": -2.76,
+          "distance_to_20d_high_pct": -8.66,
+          "distance_to_20d_low_pct": 0.92
+        },
+        "company_profile": {},
+        "announcements": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>",
+            "cninfo: no fetcher registered",
+            "akshare: no fetcher registered"
+          ]
+        },
+        "news": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>",
+            "akshare: no fetcher registered"
+          ]
+        },
+        "reports": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>"
+          ]
+        },
+        "source_status": {
+          "quote": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>",
+              "tencent_qt: no fetcher registered",
+              "sina_quote: no fetcher registered"
+            ]
+          },
+          "kline": {
+            "ok": true,
+            "source": "tencent_fqkline",
+            "fallback": true,
+            "errors": [
+              "eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>"
+            ]
+          },
+          "announcements": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>",
+              "cninfo: no fetcher registered",
+              "akshare: no fetcher registered"
+            ]
+          },
+          "news": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>",
+              "akshare: no fetcher registered"
+            ]
+          },
+          "company_profile": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_profile: request failed: <urlopen error [Errno 61] Connection refused>",
+              "cninfo: no fetcher registered"
+            ]
+          },
+          "reports": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>"
+            ]
+          }
+        },
+        "behavior_observation_hints": []
+      }
+    },
+    "required_schema": {
+      "training_decision": "string，必须服从 heuristic_report.rule_status",
+      "training_tasks": [
+        "string，训练任务，不含直接买卖指令"
+      ],
+      "summary": "string，解释评分结果和主要行为风险",
+      "decision_support_advice": [
+        "string，买入前检查建议，不含直接买卖结论"
+      ],
+      "risk_warnings": [
+        "string，基于 risk_tags 和 stock_context 的风险提醒"
+      ],
+      "missing_research_items": [
+        "string，还需要补充核对的公开资料"
+      ],
+      "plan_improvement_tasks": [
+        "string，交易计划需要补强的任务"
+      ],
+      "pause_conditions": [
+        "string，触发后应暂停本次计划的条件"
+      ]
+    }
+  },
+  "mock_kimi_content": {
+    "training_decision": "当前不满足本次训练规则：计划基本完整，但仍需补充不交易条件。",
+    "risk_tags": [
+      "追涨",
+      "止损缺失",
+      "消息驱动"
+    ],
+    "missing_fields": [
+      "止损计划",
+      "最大可接受亏损",
+      "当前情绪状态"
+    ],
+    "training_tasks": [
+      "补全止损计划",
+      "补全最大可接受亏损",
+      "补全当前情绪状态",
+      "补充一条明确的不交易条件",
+      "建议买入并持有到目标价"
+    ],
+    "decision_support_advice": [
+      "先核对买入理由、风险边界与公开背景是否相互支持，再进入下一步观察。",
+      "建议买入并持有到目标价"
+    ],
+    "risk_warnings": [
+      "近期题材交易容易放大追涨冲动，需要确认不是由踏空情绪触发。",
+      "可以买，风险不大"
+    ],
+    "missing_research_items": [
+      "补充最近公告、新闻来源和成交量变化的公开背景。"
+    ],
+    "plan_improvement_tasks": [
+      "写出至少一条不交易条件。"
+    ],
+    "pause_conditions": [
+      "触发风险边界或无法确认题材持续性时暂停本次计划。"
+    ],
+    "summary": "用户已填写股票、买入理由与风险边界；LLM 仅输出行为训练反馈，不给出买卖建议。"
+  },
+  "orchestrator_response": {
+    "entry": "training",
+    "intent": "pre_trade_training",
+    "tool_trace": [
+      {
+        "name": "classify_intent",
+        "status": "success",
+        "detail": "",
+        "input_summary": {},
+        "output_summary": {
+          "intent": "pre_trade_training",
+          "entry": "training"
+        },
+        "timestamp": "2026-05-17T09:39:43+00:00"
+      },
+      {
+        "name": "user_profile_get",
+        "status": "success",
+        "detail": "",
+        "input_summary": {
+          "user_id": "logs_training_agent_ref"
+        },
+        "output_summary": {
+          "trader_type": "经验型散户",
+          "total_score": 50
+        },
+        "timestamp": "2026-05-17T09:39:43+00:00"
+      },
+      {
+        "name": "session_memory_query",
+        "status": "success",
+        "detail": "",
+        "input_summary": {
+          "query": "我准备买入300059，想让系统检查行为风险，不需要直接买卖建议。 300059 AI 金融题材活跃，近期突破平台，但我想先验证计划完整性。 如果跌回平台内或单笔亏损超过账户 1%，取消本次计划。 20% 1-2周",
+          "limit": 5
+        },
+        "output_summary": {
+          "count": 0
+        },
+        "timestamp": "2026-05-17T09:39:43+00:00"
+      },
+      {
+        "name": "stock_context_import",
+        "status": "success",
+        "detail": "",
+        "input_summary": {
+          "symbol": "300059",
+          "market": "A"
+        },
+        "output_summary": {
+          "symbol": "300059",
+          "available": true,
+          "reports": 0,
+          "sources": {
+            "quote": false,
+            "kline": true,
+            "announcements": false,
+            "news": false,
+            "company_profile": false,
+            "reports": false
+          }
+        },
+        "timestamp": "2026-05-17T09:39:50+00:00"
+      },
+      {
+        "name": "training_engine",
+        "status": "success",
+        "detail": "",
+        "input_summary": {},
+        "output_summary": {
+          "plan_score": 85
+        },
+        "timestamp": "2026-05-17T09:39:50+00:00"
+      },
+      {
+        "name": "training_llm_conclusion",
+        "status": "success",
+        "detail": "",
+        "input_summary": {},
+        "output_summary": {},
+        "timestamp": "2026-05-17T09:39:50+00:00"
+      },
+      {
+        "name": "compliance_guard_check",
+        "status": "success",
+        "detail": "",
+        "input_summary": {},
+        "output_summary": {
+          "passed": true,
+          "flags": []
+        },
+        "timestamp": "2026-05-17T09:39:50+00:00"
+      },
+      {
+        "name": "session_memory_write",
+        "status": "success",
+        "detail": "",
+        "input_summary": {},
+        "output_summary": {
+          "memory_id": "mem_0ab0fe042843",
+          "tags": []
+        },
+        "timestamp": "2026-05-17T09:39:50+00:00"
+      }
+    ],
+    "report": {
+      "report_id": "training_162877895d2c",
+      "scenario": "buy",
+      "scenario_label": "我准备买入",
+      "plan_score": 85,
+      "rule_status": "passed",
+      "training_decision": "满足本次训练规则",
+      "risk_tags": [],
+      "missing_fields": [],
+      "training_tasks": [
+        "补充一条明确的不交易条件"
+      ],
+      "research_context_used": 0,
+      "next_requirement": "下一次训练需先写清股票名称/代码、买入理由与风险边界。",
+      "summary": "用户已填写股票、买入理由与风险边界；LLM 仅输出行为训练反馈，不给出买卖建议。",
+      "created_at": "2026-05-17T09:39:50+00:00",
+      "stock_context_used": true,
+      "stock_context_summary": {
+        "usage": "training_context_only",
+        "compliance_note": "只用于交易能力训练背景，不输出买入、卖出、持有等投资建议。",
+        "symbol": "300059",
+        "market": "A",
+        "quote": {},
+        "technical": {
+          "available": true,
+          "as_of": "2026-05-15",
+          "latest_close": 19.73,
+          "change_pct_3d": -7.24,
+          "change_pct_5d": -3.71,
+          "change_pct_20d": -1.6,
+          "volatility_20d": 1.7,
+          "consecutive_up_days": 0,
+          "distance_to_ma5_pct": -4.72,
+          "distance_to_ma20_pct": -2.76,
+          "distance_to_20d_high_pct": -8.66,
+          "distance_to_20d_low_pct": 0.92
+        },
+        "company_profile": {},
+        "announcements": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>",
+            "cninfo: no fetcher registered",
+            "akshare: no fetcher registered"
+          ]
+        },
+        "news": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>",
+            "akshare: no fetcher registered"
+          ]
+        },
+        "reports": {
+          "ok": false,
+          "source": "",
+          "items": [],
+          "errors": [
+            "eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>"
+          ]
+        },
+        "source_status": {
+          "quote": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>",
+              "tencent_qt: no fetcher registered",
+              "sina_quote: no fetcher registered"
+            ]
+          },
+          "kline": {
+            "ok": true,
+            "source": "tencent_fqkline",
+            "fallback": true,
+            "errors": [
+              "eastmoney_push2: request failed: <urlopen error [Errno 61] Connection refused>"
+            ]
+          },
+          "announcements": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_announcements: request failed: <urlopen error [Errno 61] Connection refused>",
+              "cninfo: no fetcher registered",
+              "akshare: no fetcher registered"
+            ]
+          },
+          "news": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "duckduckgo: request failed: <urlopen error [Errno 61] Connection refused>",
+              "akshare: no fetcher registered"
+            ]
+          },
+          "company_profile": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_profile: request failed: <urlopen error [Errno 61] Connection refused>",
+              "cninfo: no fetcher registered"
+            ]
+          },
+          "reports": {
+            "ok": false,
+            "source": "",
+            "fallback": true,
+            "errors": [
+              "eastmoney_report: request failed: <urlopen error [Errno 61] Connection refused>"
+            ]
+          }
+        },
+        "behavior_observation_hints": []
+      },
+      "decision_support_advice": [
+        "先核对买入理由、风险边界与公开背景是否相互支持，再进入下一步观察。"
+      ],
+      "risk_warnings": [
+        "近期题材交易容易放大追涨冲动，需要确认不是由踏空情绪触发。"
+      ],
+      "missing_research_items": [
+        "补充最近公告、新闻来源和成交量变化的公开背景。"
+      ],
+      "plan_improvement_tasks": [
+        "写出至少一条不交易条件。"
+      ],
+      "pause_conditions": [
+        "触发风险边界或无法确认题材持续性时暂停本次计划。"
+      ],
+      "llm_used": true,
+      "task_ids": [
+        "task_d1bd85592b84"
+      ],
+      "compliance_notice": "本系统仅用于投资教育与交易能力训练，不构成任何投资建议、个股推荐或买卖信号。",
+      "compliance_passed": true,
+      "compliance_flags": []
+    },
+    "memory_written": true,
+    "memory": {
+      "memory_id": "mem_0ab0fe042843",
+      "user_id": "logs_training_agent_ref",
+      "session_type": "training",
+      "summary": "用户已填写股票、买入理由与风险边界；LLM 仅输出行为训练反馈，不给出买卖建议。",
+      "decision_pattern": "满足本次训练规则",
+      "tags": [],
+      "report_id": "training_162877895d2c",
+      "created_at": "2026-05-17T09:39:50+00:00"
+    }
+  },
+  "basic_assertions": [
+    "training intent is pre_trade_training",
+    "Kimi-compatible endpoint receives response_format=json_object",
+    "Kimi user prompt contains user_payload.stock_context, heuristic_report, and required_schema",
+    "LLM decision-support fields are merged after direct-advice filtering",
+    "tool_trace contains training_llm_conclusion success and training_engine success"
+  ]
+}

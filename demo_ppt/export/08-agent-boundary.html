@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AITradingPlatform · Agent Boundary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./slides.css">
+</head>
+<body>
+<section data-slide data-screen-label="08 Agent Boundary">
+  <div class="dot-bg"></div>
+  <div class="gold-curve thin"></div>
+  <div class="tpl-badge"><b>Agent Boundary</b> <span class="num">08</span></div>
+  <div class="main">
+    <div class="eyebrow">MCP 工具边界</div>
+    <div class="heading" style="margin-top:18px; max-width:1260px;">MCP 默认只读画像，不开放评测提交和训练写入。</div>
+    <div class="matrix" style="margin-top:58px;">
+      <div class="head">链路</div>
+      <div class="head">用户在哪里操作</div>
+      <div class="head">系统保存什么</div>
+      <div class="head">Agent 如何使用</div>
+      <div class="label">评测</div>
+      <div>React 前端完成真实问卷</div>
+      <div>画像、证据、能力维度、风险标签</div>
+      <div>不代答，只读取结果</div>
+      <div class="label">训练</div>
+      <div>前端提交场景和表单</div>
+      <div>训练记忆、行为模式、复盘线索</div>
+      <div>指出训练重点和学习路径</div>
+      <div class="label">合规</div>
+      <div>用户保持最终判断</div>
+      <div>不保存真实交易执行指令</div>
+      <div>不输出买卖建议或交易信号</div>
+    </div>
+    <div class="chip-row" style="margin-top:36px;">
+      <div class="chip">aitrading_extract_user_profile</div>
+      <div class="chip">aitrading_get_user_profile_raw</div>
+      <div class="chip">aitrading_search_user_profile_memories</div>
+    </div>
+  </div>
+  <div class="slide-foot"><span class="num">08</span><span class="bar"></span><span>Read profile, do not replace assessment</span></div>
+  <div class="brand-mark"><div class="logo">AI</div><div class="stack"><span>AITrading</span><span>Platform</span></div></div>
+</section>
+</body>
+</html>

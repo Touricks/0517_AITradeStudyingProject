@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AITradingPlatform · System Thesis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./slides.css">
+</head>
+<body>
+<section data-slide data-screen-label="02 Thesis">
+  <div class="dot-bg"></div>
+  <div class="gold-curve thin"></div>
+  <div class="tpl-badge"><b>Design Thesis</b> <span class="num">02</span></div>
+  <div class="main">
+    <div class="eyebrow">为什么不是 Agent 做评测</div>
+    <div class="heading" style="margin-top:18px; max-width:1200px;">评测需要用户真实输入；Agent 更适合在画像之后工作。</div>
+    <div class="two-col" style="margin-top:58px;">
+      <div class="card dark" style="min-height:420px;">
+        <div class="big-number">01</div>
+        <h3 style="margin-top:28px;">评测阶段要控制推断</h3>
+        <p>如果让 Agent 替用户完成评测，模型可能补全、迎合或过度推断，最终画像会偏离用户真实交易行为。</p>
+      </div>
+      <div class="card" style="min-height:420px;">
+        <div class="big-number">02</div>
+        <h3 style="margin-top:28px;">Agent 读取画像做个性化建议</h3>
+        <p>用户在前端完成问卷与训练后，后端沉淀结构化画像。Agent 通过 MCP 读取画像、证据和历史记忆，再给出学习与训练反馈。</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-foot"><span class="num">02</span><span class="bar"></span><span>Frontend assessment first, Agent advice later</span></div>
+  <div class="brand-mark"><div class="logo">AI</div><div class="stack"><span>AITrading</span><span>Platform</span></div></div>
+</section>
+</body>
+</html>

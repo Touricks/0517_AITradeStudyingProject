@@ -1,0 +1,17 @@
+[project]
+name = "aitrading-ability-mcp"
+version = "0.1.0"
+description = "STDIO MCP adapter for the AI Trading Ability Training backend."
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+aitrading-ability-mcp = "aitrading_ability_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
